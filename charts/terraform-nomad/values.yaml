@@ -1,0 +1,27 @@
+# Name of the configmap
+name: TO_SET
+
+# Enable or not the creation on nomad namespace
+# namespace:
+#   enabled: true
+#   name: pikachu
+#   description: 'this is a description of pikachu.'
+#   meta:
+#     production: 'false'
+namespace:
+  enabled: false
+
+# List of jobs, the name and template are mandatory, the rest of properties will depend of your jinja template for the job.
+# jobs:
+# - name: whoami
+#   template: whoami
+#   region: europe
+#   datacenter: infra
+#   namespace: pikachu
+#   image:
+#     repository: traefik/whoami
+#     tag: v1.10.1
+#   resources:
+#     cpu: 50
+#     memory: 64
+jobs: []

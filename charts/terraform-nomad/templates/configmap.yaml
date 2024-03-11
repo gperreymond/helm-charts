@@ -1,0 +1,55 @@
+{{- $root := .Values -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.name }}
+  labels:
+    hashicorp.nomad/type: terraform
+data:
+  {{- range $path, $_ :=  .Files.Glob  "jobs/**.j2" }}    
+  {{ $path | trimPrefix "jobs/" }}: |- 
+{{ $.Files.Get $path | indent 4 }}
+  {{ end }}
+  'values.yaml': |-
+    {{- range $job := .Values.jobs }}
+    {{$job.name}}_{{$job.namespace}}:
+{{ $job | toYaml | indent 6 -}}
+    {{ end }}
+  {{- if .Values.namespace.enabled }}
+  'namespace.tf': |-
+    resource "nomad_namespace" "{{ .Values.namespace.name }}" {
+      name = "{{ .Values.namespace.name }}"
+      description = "{{ .Values.namespace.description }}"
+      {{- if .Values.namespace.meta }}
+      meta = {
+      {{- range $key, $value := .Values.namespace.meta }}
+          {{ $key }} = "{{ $value }}"
+      {{- end }}
+      }
+      {{- end }}
+    }
+  {{- end }}
+  'jobs.tf': |-
+    {{- range $job := .Values.jobs }}
+    data "jinja_template" "{{$job.name}}_{{$job.namespace}}" {
+      source {
+        template = file("${path.module}/{{$job.template}}.j2")
+        directory = "${path.module}"
+      }
+      context {
+        type = "yaml"
+        data = yamlencode(yamldecode(file("${path.module}/values.yaml"))["{{$job.name}}_{{$job.namespace}}"])
+      }
+    }
+    resource "nomad_job" "{{$job.name}}_{{$job.namespace}}" {
+      purge_on_destroy = true
+      {{- if $root.namespace.enabled }}
+      depends_on = [nomad_namespace.{{ $root.namespace.name }}]
+      {{- end }}
+      jobspec = <<EOF
+    ${data.jinja_template.{{$job.name}}_{{$job.namespace}}.result}
+    EOF
+    }
+    {{ end }}
+
