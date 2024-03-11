@@ -1,5 +1,5 @@
 # Name of the configmap
-name: TO_SET
+name: to-set
 
 # Enable or not the creation on nomad namespace
 # namespace:
