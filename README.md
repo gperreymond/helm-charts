@@ -1,4 +1,4 @@
-# HELM CHARTS
+# HELM CHARTS
 
 ```sh
 # for each charts
